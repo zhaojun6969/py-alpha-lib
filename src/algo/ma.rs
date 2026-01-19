@@ -26,45 +26,93 @@ pub fn ta_ma<NumT: Float + Send + Sync>(
   r.par_chunks_mut(ctx.chunk_size(r.len()))
     .zip(input.par_chunks(ctx.chunk_size(input.len())))
     .for_each(|(r, x)| {
-      let start = ctx.start(ctx.start(r.len()));
+      let start = ctx.start(r.len());
       r.fill(NumT::nan());
       if ctx.skip_nan() {
         let iter = SkipNanWindow::new(x, periods, start);
+        let mut sum = NumT::zero();
         for i in iter {
-          if !is_normal(&x[i.end]) {
-            // always set nan if the current value is nan
+          let val = x[i.end];
+          if val.is_normal() {
+            sum = sum + val;
+          }
+
+          // subtract values that fell out of the window
+          for k in i.prev_start..i.start {
+            let old = x[k];
+            if old.is_normal() {
+              sum = sum - old;
+            }
+          }
+
+          if !is_normal(&val) {
             continue;
           }
+
           if ctx.strictly_cycle() {
-            if i.no_nan_count == periods {
-              let sum = x[i.start..=i.end]
-                .iter()
-                .fold(NumT::zero(), |acc, x| acc + *x);
+            // strict cycle with skip_nan implies we want 'periods' valid numbers,
+            // BUT existing behavior implies we return NaN if there are any NaNs in the window.
+            if i.no_nan_count == periods && (i.end - i.start + 1) == periods {
               r[i.end] = sum / NumT::from(periods).unwrap();
             }
           } else {
-            let sum = x[i.start..=i.end]
-              .iter()
-              .filter(|&x| x.is_normal())
-              .fold(NumT::zero(), |acc, x| acc + *x);
             r[i.end] = sum / NumT::from(i.no_nan_count).unwrap();
           }
         }
       } else {
+        let mut sum = NumT::zero();
+        let mut nan_in_window = 0;
+
+        // Pre-initialization for start > 0
+        let pre_fill_start = if start >= periods { start - periods } else { 0 };
+        for k in pre_fill_start..start {
+          if x[k].is_normal() {
+            sum = sum + x[k];
+          } else {
+            nan_in_window += 1;
+          }
+        }
+
         for i in start..x.len() {
-          if !is_normal(&x[i]) {
-            // always set nan if the current value is nan
+          let val = x[i];
+
+          // Add new value
+          if val.is_normal() {
+            sum = sum + val;
+          } else {
+            nan_in_window += 1;
+          }
+
+          // Remove old value
+          if i >= periods {
+            let old = x[i - periods];
+            if old.is_normal() {
+              sum = sum - old;
+            } else {
+              nan_in_window -= 1;
+            }
+          }
+
+          if !is_normal(&val) {
             continue;
           }
-          if i >= periods - 1 {
-            let sum = x[i + 1 - periods..=i]
-              .iter()
-              .fold(NumT::zero(), |acc, x| acc + *x);
-            r[i] = sum / NumT::from(periods).unwrap();
+
+          if ctx.strictly_cycle() {
+            if i >= periods - 1 {
+              if nan_in_window == 0 {
+                r[i] = sum / NumT::from(periods).unwrap();
+              }
+            }
           } else {
-            if !ctx.strictly_cycle() {
-              let sum = x[0..=i].iter().fold(NumT::zero(), |acc, x| acc + *x);
-              r[i] = sum / NumT::from(i + 1).unwrap();
+            if i < periods {
+              if nan_in_window == 0 {
+                let count = if i < periods { i + 1 } else { periods };
+                r[i] = sum / NumT::from(count).unwrap();
+              }
+            } else {
+              if nan_in_window == 0 {
+                r[i] = sum / NumT::from(periods).unwrap();
+              }
             }
           }
         }

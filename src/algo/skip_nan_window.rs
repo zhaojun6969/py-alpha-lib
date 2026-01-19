@@ -7,6 +7,8 @@ use num_traits::Float;
 pub struct Item {
   /// Index of current start, ensure data[start] is normal
   pub start: usize,
+  /// Index of previous start, ensure data[prev_start] is normal
+  pub prev_start: usize,
   /// Index of current end, ensure data[end] is normal
   pub end: usize,
   /// Number of non-nan values in the window
@@ -14,9 +16,10 @@ pub struct Item {
 }
 
 impl Item {
-  pub fn new(start: usize, end: usize, no_nan_count: usize) -> Self {
+  pub fn new(start: usize, prev_start: usize, end: usize, no_nan_count: usize) -> Self {
     Item {
       start,
+      prev_start,
       end,
       no_nan_count,
     }
@@ -50,7 +53,7 @@ impl<'a, NumT> SkipNanWindow<'a, NumT> {
     SkipNanWindow {
       window,
       data,
-      item: Item::new(skip, skip, 0),
+      item: Item::new(skip, skip, skip, 0),
       cursor: skip,
     }
   }
@@ -63,6 +66,9 @@ impl<NumT: Float> Iterator for SkipNanWindow<'_, NumT> {
     if self.cursor >= self.data.len() {
       return None;
     }
+
+    // Update prev_start before modifying start
+    self.item.prev_start = self.item.start;
 
     let val = self.data[self.cursor];
     // Check if the current value is valid (not NaN)
@@ -105,14 +111,14 @@ mod tests {
     }
 
     assert_eq!(items.len(), 8);
-    assert_eq!(items[0], Item::new(0, 0, 1));
-    assert_eq!(items[1], Item::new(0, 1, 2));
-    assert_eq!(items[2], Item::new(0, 2, 2));
-    assert_eq!(items[3], Item::new(0, 3, 3));
-    assert_eq!(items[4], Item::new(1, 4, 3));
-    assert_eq!(items[5], Item::new(3, 5, 3));
-    assert_eq!(items[6], Item::new(4, 6, 3));
-    assert_eq!(items[7], Item::new(5, 7, 3));
+    assert_eq!(items[0], Item::new(0, 0, 0, 1));
+    assert_eq!(items[1], Item::new(0, 0, 1, 2));
+    assert_eq!(items[2], Item::new(0, 0, 2, 2));
+    assert_eq!(items[3], Item::new(0, 0, 3, 3));
+    assert_eq!(items[4], Item::new(1, 0, 4, 3));
+    assert_eq!(items[5], Item::new(3, 1, 5, 3));
+    assert_eq!(items[6], Item::new(4, 3, 6, 3));
+    assert_eq!(items[7], Item::new(5, 4, 7, 3));
   }
 
   #[test]
@@ -127,11 +133,11 @@ mod tests {
     }
 
     assert_eq!(items.len(), 6);
-    assert_eq!(items[0], Item::new(3, 2, 0)); // The NAN skip
-    assert_eq!(items[1], Item::new(3, 3, 1)); // 3
-    assert_eq!(items[2], Item::new(3, 4, 2)); // 3, 4
-    assert_eq!(items[3], Item::new(3, 5, 3)); // 3, 4, 5
-    assert_eq!(items[4], Item::new(4, 6, 3)); // 4, 5, 6
-    assert_eq!(items[5], Item::new(5, 7, 3)); // 5, 6, 7
+    assert_eq!(items[0], Item::new(3, 2, 2, 0)); // The NAN skip
+    assert_eq!(items[1], Item::new(3, 3, 3, 1)); // 3
+    assert_eq!(items[2], Item::new(3, 3, 4, 2)); // 3, 4
+    assert_eq!(items[3], Item::new(3, 3, 5, 3)); // 3, 4, 5
+    assert_eq!(items[4], Item::new(4, 3, 6, 3)); // 4, 5, 6
+    assert_eq!(items[5], Item::new(5, 4, 7, 3)); // 5, 6, 7
   }
 }
