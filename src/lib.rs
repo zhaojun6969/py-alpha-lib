@@ -147,6 +147,8 @@ mod algo_impl {
 #[pymodule]
 fn _algo(m: &Bound<'_, PyModule>) -> PyResult<()> {
   use algo_impl::*;
+  pyo3_log::init();
+
   m.add_function(wrap_pyfunction!(ema, m)?)?;
   algo_impl::register_functions(m)?;
   Ok(())

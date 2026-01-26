@@ -7,6 +7,8 @@ mod ma;
 mod rank;
 mod series;
 mod skip_nan_window;
+mod stats;
+mod stddev;
 mod sum;
 
 use std::fmt::{Debug, Display};
@@ -19,6 +21,8 @@ pub use extremum::*;
 pub use ma::*;
 pub use rank::*;
 pub use series::*;
+pub use stats::*;
+pub use stddev::*;
 pub use sum::*;
 
 pub use num_traits::Float;

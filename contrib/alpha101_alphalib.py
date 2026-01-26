@@ -11,19 +11,21 @@ import pandas as pd
 from numpy import abs
 from numpy import log
 from numpy import sign
-from alphas import Alphas
-from datas import *
-
 from scipy.stats import rankdata
+import alpha
+import logging
+
+logger = logging.getLogger("alpha101")
+
 
 # region Auxiliary functions
 
 
-def returns(df):
-  return df.rolling(2).apply(lambda x: x.iloc[-1] / x.iloc[0]) - 1
+def returns(a: np.ndarray):
+  return a / alpha.REF(a, 1) - 1
 
 
-def ts_sum(df, window=10):
+def ts_sum(a: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling sum.
   :param df: a pandas DataFrame.
@@ -31,47 +33,47 @@ def ts_sum(df, window=10):
   :return: a pandas DataFrame with the time-series min over the past 'window' days.
   """
 
-  return df.rolling(window).sum()
+  return alpha.SUM(a, window)
 
 
-def sma(df, window=10):
+def sma(a: np.ndarray, window=10):
   """
   Wrapper function to estimate SMA.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series min over the past 'window' days.
   """
-  return df.rolling(window).mean()
+  return alpha.MA(a, window)
 
 
-def stddev(df, window=10):
+def stddev(a: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling standard deviation.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series min over the past 'window' days.
   """
-  return df.rolling(window).std()
+  return alpha.STDDEV(a, window)
 
 
-def correlation(x, y, window=10):
+def correlation(x: np.ndarray, y: np.ndarray, window=10):
   """
-  Wrapper function to estimate rolling corelations.
+  Wrapper function to estimate rolling correlations.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series min over the past 'window' days.
   """
-  return x.rolling(window).corr(y).fillna(0).replace([np.inf, -np.inf], 0)
+  return alpha.CORR(x, y, window)
 
 
-def covariance(x, y, window=10):
+def covariance(x: np.ndarray, y: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling covariance.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series min over the past 'window' days.
   """
-  return x.rolling(window).cov(y)
+  return alpha.COV(x, y, window)
 
 
 def rolling_rank(na):
@@ -83,14 +85,14 @@ def rolling_rank(na):
   return rankdata(na, method="min")[-1]
 
 
-def ts_rank(df, window=10):
+def ts_rank(a: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling rank.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series rank over the past window days.
   """
-  return df.rolling(window).apply(rolling_rank)
+  return alpha.TS_RANK(a, window)
 
 
 def rolling_prod(na):
@@ -102,134 +104,214 @@ def rolling_prod(na):
   return np.prod(na)
 
 
-def product(df, window=10):
+def product(a: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling product.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series product over the past 'window' days.
   """
-  return df.rolling(window).apply(rolling_prod)
+  return alpha.PRODUCT(a, window)
 
 
-def ts_min(df, window=10):
+def ts_min(a: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling min.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series min over the past 'window' days.
   """
-  return df.rolling(window).min()
+  return alpha.LLV(a, window)
 
 
-def ts_max(df, window=10):
+def ts_max(a: np.ndarray, window=10):
   """
   Wrapper function to estimate rolling min.
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: a pandas DataFrame with the time-series max over the past 'window' days.
   """
-  return df.rolling(window).max()
+  return alpha.HHV(a, window)
 
 
-def delta(df, period=1):
+def delta(a: np.ndarray, period=1):
   """
   Wrapper function to estimate difference.
   :param df: a pandas DataFrame.
   :param period: the difference grade.
   :return: a pandas DataFrame with today’s value minus the value 'period' days ago.
   """
-  return df.diff(period)
+  return a - alpha.REF(a, period)
 
 
-def delay(df, period=1):
+def delay(a: np.ndarray, period=1):
   """
   Wrapper function to estimate lag.
   :param df: a pandas DataFrame.
   :param period: the lag grade.
   :return: a pandas DataFrame with lagged time series
   """
-  return df.shift(period)
+  return alpha.REF(a, period)
 
 
-def rank(df):
+def rank(a: np.ndarray):
   """
   Cross sectional rank
   :param df: a pandas DataFrame.
   :return: a pandas DataFrame with rank along columns.
   """
-  return df.rank(axis=1, method="min", pct=True)
-  # return df.rank(pct=True)
+  return alpha.RANK(a)
 
 
-def scale(df, k=1):
+def scale(a: np.ndarray, k=1):
   """
   Scaling time serie.
   :param df: a pandas DataFrame.
   :param k: scaling factor.
   :return: a pandas DataFrame rescaled df such that sum(abs(df)) = k
   """
-  return df.mul(k).div(np.abs(df).sum())
+  sum = np.abs(a).sum()
+  return a * k / sum
 
 
-def ts_argmax(df, window=10):
+def ts_argmax(a: np.ndarray, window=10):
   """
   Wrapper function to estimate which day ts_max(df, window) occurred on
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: well.. that :)
   """
-  return df.rolling(window).apply(np.argmax) + 1
+  return alpha.HHVBARS(a, window)
 
 
-def ts_argmin(df, window=10):
+def ts_argmin(a: np.ndarray, window=10):
   """
   Wrapper function to estimate which day ts_min(df, window) occurred on
   :param df: a pandas DataFrame.
   :param window: the rolling window.
   :return: well.. that :)
   """
-  return df.rolling(window).apply(np.argmin) + 1
+  return alpha.LLVBAR(a, window)
 
 
-def decay_linear(df, period=10):
+def decay_linear(a: np.ndarray, period=10):
   """
   Linear weighted moving average implementation.
   :param df: a pandas DataFrame.
   :param period: the LWMA period
   :return: a pandas DataFrame with the LWMA.
   """
-  weights = np.array(range(1, period + 1))
-  sum_weights = np.sum(weights)
-  return df.rolling(period).apply(lambda x: np.sum(weights * x) / sum_weights)
-
-
-def max(sr1, sr2):
-  return np.maximum(sr1, sr2)
-
-
-def min(sr1, sr2):
-  return np.minimum(sr1, sr2)
+  return alpha.LWMA(a, period)
 
 
 # endregion
 
 
-class Alphas101(Alphas):
-  def __init__(self, df_data):
-    self.open = df_data["open"]  # 开盘价
-    self.high = df_data["high"]  # 最高价
-    self.low = df_data["low"]  # 最低价
-    self.close = df_data["close"]  # 收盘价
-    self.volume = df_data["volume"]  # 成交量
-    self.returns = returns(df_data["close"])  # 日收益
-    self.vwap = df_data["vwap"]  # 成交均价
+def get_alpha(df):
+  stock = Alphas(df)
+  df["alpha1"] = stock.alpha001()
+  df["alpha2"] = stock.alpha002()
+  df["alpha3"] = stock.alpha003()
+  df["alpha4"] = stock.alpha004()
+  df["alpha5"] = stock.alpha005()
+  df["alpha6"] = stock.alpha006()
+  df["alpha7"] = stock.alpha007()
+  df["alpha8"] = stock.alpha008()
+  df["alpha9"] = stock.alpha009()
+  df["alpha10"] = stock.alpha010()
+  df["alpha11"] = stock.alpha011()
+  df["alpha12"] = stock.alpha012()
+  df["alpha13"] = stock.alpha013()
+  df["alpha14"] = stock.alpha014()
+  df["alpha15"] = stock.alpha015()
+  df["alpha16"] = stock.alpha016()
+  df["alpha17"] = stock.alpha017()
+  df["alpha18"] = stock.alpha018()
+  df["alpha19"] = stock.alpha019()
+  df["alpha20"] = stock.alpha020()
+  df["alpha21"] = stock.alpha021()
+  df["alpha22"] = stock.alpha022()
+  df["alpha23"] = stock.alpha023()
+  df["alpha24"] = stock.alpha024()
+  df["alpha25"] = stock.alpha025()
+  df["alpha26"] = stock.alpha026()
+  df["alpha27"] = stock.alpha027()
+  df["alpha28"] = stock.alpha028()
+  df["alpha29"] = stock.alpha029()
+  df["alpha30"] = stock.alpha030()
+  df["alpha31"] = stock.alpha031()
+  df["alpha32"] = stock.alpha032()
+  df["alpha33"] = stock.alpha033()
+  df["alpha34"] = stock.alpha034()
+  df["alpha35"] = stock.alpha035()
+  df["alpha36"] = stock.alpha036()
+  df["alpha37"] = stock.alpha037()
+  df["alpha38"] = stock.alpha038()
+  df["alpha39"] = stock.alpha039()
+  df["alpha40"] = stock.alpha040()
+  df["alpha41"] = stock.alpha041()
+  df["alpha42"] = stock.alpha042()
+  df["alpha43"] = stock.alpha043()
+  df["alpha44"] = stock.alpha044()
+  df["alpha45"] = stock.alpha045()
+  df["alpha46"] = stock.alpha046()
+  df["alpha47"] = stock.alpha047()
+  df["alpha49"] = stock.alpha049()
+  df["alpha50"] = stock.alpha050()
+  df["alpha51"] = stock.alpha051()
+  df["alpha52"] = stock.alpha052()
+  df["alpha53"] = stock.alpha053()
+  df["alpha54"] = stock.alpha054()
+  df["alpha55"] = stock.alpha055()
+  df["alpha57"] = stock.alpha057()
+  df["alpha60"] = stock.alpha060()
+  df["alpha61"] = stock.alpha061()
+  df["alpha62"] = stock.alpha062()
+  df["alpha64"] = stock.alpha064()
+  df["alpha65"] = stock.alpha065()
+  df["alpha66"] = stock.alpha066()
+  df["alpha68"] = stock.alpha068()
+  df["alpha71"] = stock.alpha071()
+  df["alpha72"] = stock.alpha072()
+  df["alpha73"] = stock.alpha073()
+  df["alpha74"] = stock.alpha074()
+  df["alpha75"] = stock.alpha075()
+  df["alpha77"] = stock.alpha077()
+  df["alpha78"] = stock.alpha078()
+  df["alpha81"] = stock.alpha081()
+  df["alpha83"] = stock.alpha083()
+  df["alpha84"] = stock.alpha084()
+  df["alpha85"] = stock.alpha085()
+  df["alpha86"] = stock.alpha086()
+  df["alpha88"] = stock.alpha088()
+  df["alpha92"] = stock.alpha092()
+  df["alpha94"] = stock.alpha094()
+  df["alpha95"] = stock.alpha095()
+  df["alpha96"] = stock.alpha096()
+  df["alpha98"] = stock.alpha098()
+  df["alpha99"] = stock.alpha099()
+  df["alpha101"] = stock.alpha101()
+  return df
+
+
+class Alphas(object):
+  def __init__(self, df_data: pd.DataFrame):
+    self.open = df_data["open"].to_numpy()
+    self.high = df_data["high"].to_numpy()
+    self.low = df_data["low"].to_numpy()
+    self.close = df_data["close"].to_numpy()
+    self.volume = df_data["vol"].to_numpy()
+    self.returns = returns(df_data["close"].to_numpy())
+    self.vwap = df_data["vwap"].to_numpy()
 
   # Alpha#1	 (rank(Ts_ArgMax(SignedPower(((returns < 0) ? stddev(returns, 20) : close), 2.), 5)) -0.5)
   def alpha001(self):
-    inner = self.close.copy()
-    inner[self.returns < 0] = stddev(self.returns, 20)
-    return rank(ts_argmax(inner**2, 5)) - 0.5
+    return rank(
+      ts_argmax(
+        np.power(np.where(self.returns < 0, stddev(self.returns, 20), self.close), 2),
+        5,
+      )
+    )
 
   # Alpha#2	 (-1 * correlation(rank(delta(log(volume), 2)), rank(((close - open) / open)), 6))
   def alpha002(self):
@@ -359,10 +441,12 @@ class Alphas101(Alphas):
   # Alpha#21	 ((((sum(close, 8) / 8) + stddev(close, 8)) < (sum(close, 2) / 2)) ? (-1 * 1) : (((sum(close,2) / 2) < ((sum(close, 8) / 8) - stddev(close, 8))) ? 1 : (((1 < (volume / adv20)) || ((volume /adv20) == 1)) ? 1 : (-1 * 1))))
   def alpha021(self):
     cond_1 = sma(self.close, 8) + stddev(self.close, 8) < sma(self.close, 2)
-    cond_2 = sma(self.close, 2) < sma(self.close, 8) - stddev(self.close, 8)
-    cond_3 = sma(self.volume, 20) / self.volume < 1
-
-    return (cond_1 | ((~cond_1) & (~cond_2) & (~cond_3))).astype("int") * (-2) + 1
+    cond_2 = sma(self.volume, 20) / self.volume < 1
+    alpha = pd.DataFrame(np.ones_like(self.close), index=self.close.index)
+    #        alpha = pd.DataFrame(np.ones_like(self.close), index=self.close.index,
+    #                             columns=self.close.columns)
+    alpha[cond_1 | cond_2] = -1
+    return alpha
 
   # Alpha#22	 (-1 * (delta(correlation(high, volume, 5), 5) * rank(stddev(close, 20))))
   def alpha022(self):
@@ -373,11 +457,10 @@ class Alphas101(Alphas):
   # Alpha#23	 (((sum(high, 20) / 20) < high) ? (-1 * delta(high, 2)) : 0)
   def alpha023(self):
     cond = sma(self.high, 20) < self.high
-    alpha = self.close.copy(
-      deep=True
-    )  # pd.DataFrame(np.zeros_like(self.close), index=self.close.index, columns=['close'])
-    alpha[cond] = -1 * delta(self.high, 2).fillna(value=0)
-    alpha[~cond] = 0
+    alpha = pd.DataFrame(
+      np.zeros_like(self.close), index=self.close.index, columns=["close"]
+    )
+    alpha.at[cond, "close"] = -1 * delta(self.high, 2).fillna(value=0)
     return alpha
 
   # Alpha#24	 ((((delta((sum(close, 100) / 100), 100) / delay(close, 100)) < 0.05) ||((delta((sum(close, 100) / 100), 100) / delay(close, 100)) == 0.05)) ? (-1 * (close - ts_min(close,100))) : (-1 * delta(close, 3)))
@@ -401,9 +484,12 @@ class Alphas101(Alphas):
     return -1 * ts_max(df, 3)
 
   # Alpha#27	 ((0.5 < rank((sum(correlation(rank(volume), rank(vwap), 6), 2) / 2.0))) ? (-1 * 1) : 1)
+  # 可能存在问题，我自己的数据测试了很多次值全为1，可能需要调整6,2这些参数？
   def alpha027(self):
     alpha = rank((sma(correlation(rank(self.volume), rank(self.vwap), 6), 2) / 2.0))
-    return sign((alpha - 0.5) * (-2))
+    alpha[alpha > 0.5] = -1
+    alpha[alpha <= 0.5] = 1
+    return alpha
 
   # Alpha#28	 scale(((correlation(adv20, low, 5) + ((high + low) / 2)) - close))
   def alpha028(self):
@@ -433,11 +519,13 @@ class Alphas101(Alphas):
   def alpha031(self):
     adv20 = sma(self.volume, 20)
     df = correlation(adv20, self.low, 12).replace([-np.inf, np.inf], 0).fillna(value=0)
-    p1 = rank(rank(rank(decay_linear((-1 * rank(rank(delta(self.close, 10)))), 10))))
+    p1 = rank(
+      rank(rank(decay_linear((-1 * rank(rank(delta(self.close, 10)))).to_frame(), 10)))
+    )
     p2 = rank((-1 * delta(self.close, 3)))
     p3 = sign(scale(df))
 
-    return p1 + p2 + p3
+    return p1.CLOSE + p2 + p3
 
   # Alpha#32	 (scale(((sum(close, 7) / 7) - close)) + (20 * scale(correlation(vwap, delay(close, 5),230))))
   def alpha032(self):
@@ -498,7 +586,10 @@ class Alphas101(Alphas):
     adv20 = sma(self.volume, 20)
     return (
       -1
-      * rank(delta(self.close, 7) * (1 - rank(decay_linear((self.volume / adv20), 9))))
+      * rank(
+        delta(self.close, 7)
+        * (1 - rank(decay_linear((self.volume / adv20).to_frame(), 9).CLOSE))
+      )
     ) * (1 + rank(sma(self.returns, 250)))
 
   # Alpha#40	 ((-1 * rank(stddev(high, 10))) * correlation(high, volume, 10))
@@ -608,7 +699,11 @@ class Alphas101(Alphas):
   # Alpha#57	 (0 - (1 * ((close - vwap) / decay_linear(rank(ts_argmax(close, 30)), 2))))
   def alpha057(self):
     return 0 - (
-      1 * ((self.close - self.vwap) / decay_linear(rank(ts_argmax(self.close, 30)), 2))
+      1
+      * (
+        (self.close - self.vwap)
+        / decay_linear(rank(ts_argmax(self.close, 30)).to_frame(), 2).CLOSE
+      )
     )
 
   # Alpha#58	 (-1 * Ts_Rank(decay_linear(correlation(IndNeutralize(vwap, IndClass.sector), volume,3.92795), 7.89291), 5.50322))
@@ -624,10 +719,9 @@ class Alphas101(Alphas):
   # Alpha#61	 (rank((vwap - ts_min(vwap, 16.1219))) < rank(correlation(vwap, adv180, 17.9282)))
   def alpha061(self):
     adv180 = sma(self.volume, 180)
-    return (
-      rank((self.vwap - ts_min(self.vwap, 16)))
-      < rank(correlation(self.vwap, adv180, 18))
-    ).astype("int")
+    return rank((self.vwap - ts_min(self.vwap, 16))) < rank(
+      correlation(self.vwap, adv180, 18)
+    )
 
   # Alpha#62	 ((rank(correlation(vwap, sum(adv20, 22.4101), 9.91009)) < rank(((rank(open) +rank(open)) < (rank(((high + low) / 2)) + rank(high))))) * -1)
   def alpha062(self):
@@ -677,15 +771,15 @@ class Alphas101(Alphas):
   # Alpha#66	 ((rank(decay_linear(delta(vwap, 3.51013), 7.23052)) + Ts_Rank(decay_linear(((((low* 0.96633) + (low * (1 - 0.96633))) - vwap) / (open - ((high + low) / 2))), 11.4157), 6.72611)) * -1)
   def alpha066(self):
     return (
-      rank(decay_linear(delta(self.vwap, 4), 7))
+      rank(decay_linear(delta(self.vwap, 4).to_frame(), 7).CLOSE)
       + ts_rank(
         decay_linear(
           (
             (((self.low * 0.96633) + (self.low * (1 - 0.96633))) - self.vwap)
             / (self.open - ((self.high + self.low) / 2))
-          ),
+          ).to_frame(),
           11,
-        ),
+        ).CLOSE,
         7,
       )
     ) * -1
@@ -695,10 +789,9 @@ class Alphas101(Alphas):
   # Alpha#68	 ((Ts_Rank(correlation(rank(high), rank(adv15), 8.91644), 13.9333) <rank(delta(((close * 0.518371) + (low * (1 - 0.518371))), 1.06157))) * -1)
   def alpha068(self):
     adv15 = sma(self.volume, 15)
-    # 后者乘14，使比较双方处于同一水平
     return (
       ts_rank(correlation(rank(self.high), rank(adv15), 9), 14)
-      < rank(delta(((self.close * 0.518371) + (self.low * (1 - 0.518371))), 2)) * 14
+      < rank(delta(((self.close * 0.518371) + (self.low * (1 - 0.518371))), 2))
     ) * -1
 
   # Alpha#69	 ((rank(ts_max(delta(IndNeutralize(vwap, IndClass.industry), 2.72412),4.79344))^Ts_Rank(correlation(((close * 0.490655) + (vwap * (1 - 0.490655))), adv20, 4.92416),9.0615)) * -1)
@@ -709,29 +802,39 @@ class Alphas101(Alphas):
   def alpha071(self):
     adv180 = sma(self.volume, 180)
     p1 = ts_rank(
-      decay_linear(correlation(ts_rank(self.close, 3), ts_rank(adv180, 12), 18), 4), 16
+      decay_linear(
+        correlation(ts_rank(self.close, 3), ts_rank(adv180, 12), 18).to_frame(), 4
+      ).CLOSE,
+      16,
     )
     p2 = ts_rank(
       decay_linear(
-        (rank(((self.low + self.open) - (self.vwap + self.vwap))).pow(2)), 16
-      ),
+        (rank(((self.low + self.open) - (self.vwap + self.vwap))).pow(2)).to_frame(), 16
+      ).CLOSE,
       4,
     )
-    return max(p1, p2)
+    df = pd.DataFrame({"p1": p1, "p2": p2})
+    df.at[df["p1"] >= df["p2"], "max"] = df["p1"]
+    df.at[df["p2"] >= df["p1"], "max"] = df["p2"]
+    return df["max"]
     # return max(ts_rank(decay_linear(correlation(ts_rank(self.close, 3), ts_rank(adv180,12), 18).to_frame(), 4).CLOSE, 16), ts_rank(decay_linear((rank(((self.low + self.open) - (self.vwap +self.vwap))).pow(2)).to_frame(), 16).CLOSE, 4))
 
   # Alpha#72	 (rank(decay_linear(correlation(((high + low) / 2), adv40, 8.93345), 10.1519)) /rank(decay_linear(correlation(Ts_Rank(vwap, 3.72469), Ts_Rank(volume, 18.5188), 6.86671),2.95011)))
   def alpha072(self):
     adv40 = sma(self.volume, 40)
     return rank(
-      decay_linear(correlation(((self.high + self.low) / 2), adv40, 9), 10)
+      decay_linear(
+        correlation(((self.high + self.low) / 2), adv40, 9).to_frame(), 10
+      ).CLOSE
     ) / rank(
-      decay_linear(correlation(ts_rank(self.vwap, 4), ts_rank(self.volume, 19), 7), 3)
+      decay_linear(
+        correlation(ts_rank(self.vwap, 4), ts_rank(self.volume, 19), 7).to_frame(), 3
+      ).CLOSE
     )
 
   # Alpha#73	 (max(rank(decay_linear(delta(vwap, 4.72775), 2.91864)),Ts_Rank(decay_linear(((delta(((open * 0.147155) + (low * (1 - 0.147155))), 2.03608) / ((open *0.147155) + (low * (1 - 0.147155)))) * -1), 3.33829), 16.7411)) * -1)
   def alpha073(self):
-    p1 = rank(decay_linear(delta(self.vwap, 5), 3))
+    p1 = rank(decay_linear(delta(self.vwap, 5).to_frame(), 3).CLOSE)
     p2 = ts_rank(
       decay_linear(
         (
@@ -740,12 +843,15 @@ class Alphas101(Alphas):
             / ((self.open * 0.147155) + (self.low * (1 - 0.147155)))
           )
           * -1
-        ),
+        ).to_frame(),
         3,
-      ),
+      ).CLOSE,
       17,
     )
-    return -1 * max(p1, p2)
+    df = pd.DataFrame({"p1": p1, "p2": p2})
+    df.at[df["p1"] >= df["p2"], "max"] = df["p1"]
+    df.at[df["p2"] >= df["p1"], "max"] = df["p2"]
+    return -1 * df["max"]
     # return (max(rank(decay_linear(delta(self.vwap, 5).to_frame(), 3).CLOSE),ts_rank(decay_linear(((delta(((self.open * 0.147155) + (self.low * (1 - 0.147155))), 2) / ((self.open *0.147155) + (self.low * (1 - 0.147155)))) * -1).to_frame(), 3).CLOSE, 17)) * -1)
 
   # Alpha#74	 ((rank(correlation(close, sum(adv30, 37.4843), 15.1365)) <rank(correlation(rank(((high * 0.0261661) + (vwap * (1 - 0.0261661)))), rank(volume), 11.4791)))* -1)
@@ -765,10 +871,9 @@ class Alphas101(Alphas):
   # Alpha#75	 (rank(correlation(vwap, volume, 4.24304)) < rank(correlation(rank(low), rank(adv50),12.4413)))
   def alpha075(self):
     adv50 = sma(self.volume, 50)
-    return (
-      rank(correlation(self.vwap, self.volume, 4))
-      < rank(correlation(rank(self.low), rank(adv50), 12))
-    ).astype("int")
+    return rank(correlation(self.vwap, self.volume, 4)) < rank(
+      correlation(rank(self.low), rank(adv50), 12)
+    )
 
   # Alpha#76	 (max(rank(decay_linear(delta(vwap, 1.24383), 11.8259)),Ts_Rank(decay_linear(Ts_Rank(correlation(IndNeutralize(low, IndClass.sector), adv81,8.14941), 19.569), 17.1543), 19.383)) * -1)
 
@@ -777,11 +882,21 @@ class Alphas101(Alphas):
     adv40 = sma(self.volume, 40)
     p1 = rank(
       decay_linear(
-        ((((self.high + self.low) / 2) + self.high) - (self.vwap + self.high)), 20
-      )
+        (
+          (((self.high + self.low) / 2) + self.high) - (self.vwap + self.high)
+        ).to_frame(),
+        20,
+      ).CLOSE
     )
-    p2 = rank(decay_linear(correlation(((self.high + self.low) / 2), adv40, 3), 6))
-    return min(p1, p2)
+    p2 = rank(
+      decay_linear(
+        correlation(((self.high + self.low) / 2), adv40, 3).to_frame(), 6
+      ).CLOSE
+    )
+    df = pd.DataFrame({"p1": p1, "p2": p2})
+    df.at[df["p1"] >= df["p2"], "min"] = df["p2"]
+    df.at[df["p2"] >= df["p1"], "min"] = df["p1"]
+    return df["min"]
     # return min(rank(decay_linear(((((self.high + self.low) / 2) + self.high) - (self.vwap + self.high)).to_frame(), 20).CLOSE),rank(decay_linear(correlation(((self.high + self.low) / 2), adv40, 3).to_frame(), 6).CLOSE))
 
   # Alpha#78	 (rank(correlation(sum(((low * 0.352233) + (vwap * (1 - 0.352233))), 19.7428),sum(adv40, 19.7428), 6.83313))^rank(correlation(rank(vwap), rank(volume), 5.77492)))
@@ -840,12 +955,12 @@ class Alphas101(Alphas):
     )
 
   # Alpha#86	 ((Ts_Rank(correlation(close, sum(adv20, 14.7444), 6.00049), 20.4195) < rank(((open+ close) - (vwap + open)))) * -1)
+
   def alpha086(self):
     adv20 = sma(self.volume, 20)
-    # 后者乘以20，使比较双方处于同一水平
     return (
       ts_rank(correlation(self.close, sma(adv20, 15), 6), 20)
-      < rank(((self.open + self.close) - (self.vwap + self.open))) * 20
+      < rank(((self.open + self.close) - (self.vwap + self.open)))
     ) * -1
 
   # Alpha#87	 (max(rank(decay_linear(delta(((close * 0.369701) + (vwap * (1 - 0.369701))),1.91233), 2.65461)), Ts_Rank(decay_linear(abs(correlation(IndNeutralize(adv81,IndClass.industry), close, 13.4132)), 4.89768), 14.4535)) * -1)
@@ -855,13 +970,22 @@ class Alphas101(Alphas):
     adv60 = sma(self.volume, 60)
     p1 = rank(
       decay_linear(
-        ((rank(self.open) + rank(self.low)) - (rank(self.high) + rank(self.close))), 8
-      )
+        (
+          (rank(self.open) + rank(self.low)) - (rank(self.high) + rank(self.close))
+        ).to_frame(),
+        8,
+      ).CLOSE
     )
     p2 = ts_rank(
-      decay_linear(correlation(ts_rank(self.close, 8), ts_rank(adv60, 21), 8), 7), 3
+      decay_linear(
+        correlation(ts_rank(self.close, 8), ts_rank(adv60, 21), 8).to_frame(), 7
+      ).CLOSE,
+      3,
     )
-    return min(p1, p2)
+    df = pd.DataFrame({"p1": p1, "p2": p2})
+    df.at[df["p1"] >= df["p2"], "min"] = df["p2"]
+    df.at[df["p2"] >= df["p1"], "min"] = df["p1"]
+    return df["min"]
     # return min(rank(decay_linear(((rank(self.open) + rank(self.low)) - (rank(self.high) + rank(self.close))).to_frame(),8).CLOSE), ts_rank(decay_linear(correlation(ts_rank(self.close, 8), ts_rank(adv60,20.6966), 8).to_frame(), 7).CLOSE, 3))
 
   # Alpha#89	 (Ts_Rank(decay_linear(correlation(((low * 0.967285) + (low * (1 - 0.967285))), adv10,6.94279), 5.51607), 3.79744) - Ts_Rank(decay_linear(delta(IndNeutralize(vwap,IndClass.industry), 3.48158), 10.1466), 15.3012))
@@ -875,12 +999,20 @@ class Alphas101(Alphas):
     adv30 = sma(self.volume, 30)
     p1 = ts_rank(
       decay_linear(
-        ((((self.high + self.low) / 2) + self.close) < (self.low + self.open)), 15
-      ),
+        (
+          (((self.high + self.low) / 2) + self.close) < (self.low + self.open)
+        ).to_frame(),
+        15,
+      ).CLOSE,
       19,
     )
-    p2 = ts_rank(decay_linear(correlation(rank(self.low), rank(adv30), 8), 7), 7)
-    return min(p1, p2)
+    p2 = ts_rank(
+      decay_linear(correlation(rank(self.low), rank(adv30), 8).to_frame(), 7).CLOSE, 7
+    )
+    df = pd.DataFrame({"p1": p1, "p2": p2})
+    df.at[df["p1"] >= df["p2"], "min"] = df["p2"]
+    df.at[df["p2"] >= df["p1"], "min"] = df["p1"]
+    return df["min"]
     # return  min(ts_rank(decay_linear(((((self.high + self.low) / 2) + self.close) < (self.low + self.open)).to_frame(), 15).CLOSE,19), ts_rank(decay_linear(correlation(rank(self.low), rank(adv30), 8).to_frame(), 7).CLOSE,7))
 
   # Alpha#93	 (Ts_Rank(decay_linear(correlation(IndNeutralize(vwap, IndClass.industry), adv81,17.4193), 19.848), 7.54455) / rank(decay_linear(delta(((close * 0.524434) + (vwap * (1 -0.524434))), 2.77377), 16.2664)))
@@ -898,33 +1030,37 @@ class Alphas101(Alphas):
   # Alpha#95	 (rank((open - ts_min(open, 12.4105))) < Ts_Rank((rank(correlation(sum(((high + low)/ 2), 19.1351), sum(adv40, 19.1351), 12.8742))^5), 11.7584))
   def alpha095(self):
     adv40 = sma(self.volume, 40)
-    # 前者乘以12，使比较双方处于同一水平
-    return (
-      rank((self.open - ts_min(self.open, 12))) * 12
-      < ts_rank(
-        (
-          rank(
-            correlation(sma(((self.high + self.low) / 2), 19), sma(adv40, 19), 13)
-          ).pow(5)
-        ),
-        12,
-      )
-    ).astype("int")
+    return rank((self.open - ts_min(self.open, 12))) < ts_rank(
+      (
+        rank(
+          correlation(sma(((self.high + self.low) / 2), 19), sma(adv40, 19), 13)
+        ).pow(5)
+      ),
+      12,
+    )
 
   # Alpha#96	 (max(Ts_Rank(decay_linear(correlation(rank(vwap), rank(volume), 3.83878),4.16783), 8.38151), Ts_Rank(decay_linear(Ts_ArgMax(correlation(Ts_Rank(close, 7.45404),Ts_Rank(adv60, 4.13242), 3.65459), 12.6556), 14.0365), 13.4143)) * -1)
   def alpha096(self):
     adv60 = sma(self.volume, 60)
-    p1 = ts_rank(decay_linear(correlation(rank(self.vwap), rank(self.volume), 4), 4), 8)
+    p1 = ts_rank(
+      decay_linear(
+        correlation(rank(self.vwap), rank(self.volume).to_frame(), 4), 4
+      ).CLOSE,
+      8,
+    )
     p2 = ts_rank(
       decay_linear(
-        ts_argmax(correlation(ts_rank(self.close, 7), ts_rank(adv60, 4), 4), 13), 14
-      ),
+        ts_argmax(
+          correlation(ts_rank(self.close, 7), ts_rank(adv60, 4), 4), 13
+        ).to_frame(),
+        14,
+      ).CLOSE,
       13,
     )
-    r1 = rank(self.vwap)
-    r2 = rank(self.volume)
-    print(correlation(rank(self.vwap), rank(self.volume), 4))
-    return -1 * max(p1, p2)
+    df = pd.DataFrame({"p1": p1, "p2": p2})
+    df.at[df["p1"] >= df["p2"], "max"] = df["p1"]
+    df.at[df["p2"] >= df["p1"], "max"] = df["p2"]
+    return -1 * df["max"]
     # return (max(ts_rank(decay_linear(correlation(rank(self.vwap), rank(self.volume).to_frame(), 4),4).CLOSE, 8), ts_rank(decay_linear(ts_argmax(correlation(ts_rank(self.close, 7),ts_rank(adv60, 4), 4), 13).to_frame(), 14).CLOSE, 13)) * -1)
 
   # Alpha#97	 ((rank(decay_linear(delta(IndNeutralize(((low * 0.721001) + (vwap * (1 - 0.721001))),IndClass.industry), 3.3705), 20.4523)) - Ts_Rank(decay_linear(Ts_Rank(correlation(Ts_Rank(low,7.87871), Ts_Rank(adv60, 17.255), 4.97547), 18.5925), 15.7152), 6.71659)) * -1)
@@ -933,10 +1069,15 @@ class Alphas101(Alphas):
   def alpha098(self):
     adv5 = sma(self.volume, 5)
     adv15 = sma(self.volume, 15)
-    return rank(decay_linear(correlation(self.vwap, sma(adv5, 26), 5), 7)) - rank(
+    return rank(
+      decay_linear(correlation(self.vwap, sma(adv5, 26), 5).to_frame(), 7).CLOSE
+    ) - rank(
       decay_linear(
-        ts_rank(ts_argmin(correlation(rank(self.open), rank(adv15), 21), 9), 7), 8
-      )
+        ts_rank(
+          ts_argmin(correlation(rank(self.open), rank(adv15), 21), 9), 7
+        ).to_frame(),
+        8,
+      ).CLOSE
     )
 
   # Alpha#99	 ((rank(correlation(sum(((high + low) / 2), 19.8975), sum(adv60, 19.8975), 8.8136)) <rank(correlation(low, volume, 6.28259))) * -1)
@@ -952,15 +1093,3 @@ class Alphas101(Alphas):
   # Alpha#101	 ((close - open) / ((high - low) + .001))
   def alpha101(self):
     return (self.close - self.open) / ((self.high - self.low) + 0.001)
-
-
-if __name__ == "__main__":
-  year = "2013"
-  list_assets, df_asserts = get_hs300_stocks(f"{year}-01-01")
-
-  ################ 计算所有 #################
-  Alphas101.generate_alphas(year, list_assets, "sh000300")
-
-  ################ 计算单个 #################
-  # ret = Alphas101.generate_alpha_single('alpha096', year, list_assets, "sh000300", True)
-  # print(ret)

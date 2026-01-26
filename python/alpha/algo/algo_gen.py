@@ -41,6 +41,27 @@ def BARSSINCE(
     _algo.barssince(r, input)
     return r
 
+def CORR(
+  x: np.ndarray | list[np.ndarray], y: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate Correlation over a moving window
+  
+  Correlation = Cov(X, Y) / (StdDev(X) * StdDev(Y))
+  """
+  if isinstance(x, list) and isinstance(y, list):
+    r = [np.empty_like(x) for x in x]
+    x = [x.astype(float) for x in x]
+    y = [x.astype(float) for x in y]
+    _algo.corr(r, x, y, periods)
+    return r
+  else:
+    r = np.empty_like(x)
+    x = x.astype(float)
+    y = y.astype(float)
+    _algo.corr(r, x, y, periods)
+    return r
+
 def COUNT(
   input: np.ndarray | list[np.ndarray], periods: int
 ) -> np.ndarray | list[np.ndarray]:
@@ -58,6 +79,27 @@ def COUNT(
     r = np.empty_like(input, dtype=float)
     input = input.astype(bool)
     _algo.count(r, input, periods)
+    return r
+
+def COV(
+  x: np.ndarray | list[np.ndarray], y: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate Covariance over a moving window
+  
+  Covariance = (SumXY - (SumX * SumY) / N) / (N - 1)
+  """
+  if isinstance(x, list) and isinstance(y, list):
+    r = [np.empty_like(x) for x in x]
+    x = [x.astype(float) for x in x]
+    y = [x.astype(float) for x in y]
+    _algo.cov(r, x, y, periods)
+    return r
+  else:
+    r = np.empty_like(x)
+    x = x.astype(float)
+    y = y.astype(float)
+    _algo.cov(r, x, y, periods)
     return r
 
 def CROSS(
@@ -185,6 +227,23 @@ def LONGCROSS(
     _algo.longcross(r, a, b, n)
     return r
 
+def LWMA(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Linear Weighted Moving Average
+  
+  LWMA = SUM(Price * Weight) / SUM(Weight)
+  """
+  if isinstance(input, list):
+    r = [np.empty_like(x) for x in input]
+    _algo.lwma(r, input, periods)
+    return r
+  else:
+    r = np.empty_like(input)
+    _algo.lwma(r, input, periods)
+    return r
+
 def MA(
   input: np.ndarray | list[np.ndarray], periods: int
 ) -> np.ndarray | list[np.ndarray]:
@@ -202,11 +261,31 @@ def MA(
     _algo.ma(r, input, periods)
     return r
 
+def PRODUCT(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate product of values in preceding `periods` window
+  
+  If periods is 0, it calculates the cumulative product from the first valid value.
+  
+  Ref: https://www.amibroker.com/guide/afl/product.html
+  """
+  if isinstance(input, list):
+    r = [np.empty_like(x) for x in input]
+    _algo.product(r, input, periods)
+    return r
+  else:
+    r = np.empty_like(input)
+    _algo.product(r, input, periods)
+    return r
+
 def RANK(
   input: np.ndarray | list[np.ndarray]
 ) -> np.ndarray | list[np.ndarray]:
   """
-  Calculate rank cross group dimension, the ctx.groups() is the number of groups
+  Calculate rank percentage cross group dimension, the ctx.groups() is the number of groups
+  Same value are averaged
   """
   if isinstance(input, list):
     r = [np.empty_like(x) for x in input]
@@ -290,6 +369,23 @@ def SMA(
     _algo.sma(r, input, n, m)
     return r
 
+def STDDEV(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate Standard Deviation over a moving window
+  
+  Ref: https://en.wikipedia.org/wiki/Standard_deviation
+  """
+  if isinstance(input, list):
+    r = [np.empty_like(x) for x in input]
+    _algo.stddev(r, input, periods)
+    return r
+  else:
+    r = np.empty_like(input)
+    _algo.stddev(r, input, periods)
+    return r
+
 def SUM(
   input: np.ndarray | list[np.ndarray], periods: int
 ) -> np.ndarray | list[np.ndarray]:
@@ -339,5 +435,22 @@ def TS_RANK(
   else:
     r = np.empty_like(input)
     _algo.ts_rank(r, input, periods)
+    return r
+
+def VAR(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate Variance over a moving window
+  
+  Variance = (SumSq - (Sum^2)/N) / (N - 1)
+  """
+  if isinstance(input, list):
+    r = [np.empty_like(x) for x in input]
+    _algo.var(r, input, periods)
+    return r
+  else:
+    r = np.empty_like(input)
+    _algo.var(r, input, periods)
     return r
 

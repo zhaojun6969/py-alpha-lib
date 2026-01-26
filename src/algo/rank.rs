@@ -1,5 +1,6 @@
 use std::{cmp::Ordering, collections::BTreeMap, fmt::Debug};
 
+use log::info;
 use num_traits::Float;
 use rayon::prelude::*;
 
@@ -111,7 +112,8 @@ impl<NumT: Float> UnsafePtr<NumT> {
 unsafe impl<NumT: Float> Send for UnsafePtr<NumT> {}
 unsafe impl<NumT: Float> Sync for UnsafePtr<NumT> {}
 
-/// Calculate rank cross group dimension, the ctx.groups() is the number of groups
+/// Calculate rank percentage cross group dimension, the ctx.groups() is the number of groups
+/// Same value are averaged
 pub fn ta_rank<NumT: Float + Send + Sync + Debug>(
   ctx: &Context,
   r: &mut [NumT],
@@ -121,12 +123,14 @@ pub fn ta_rank<NumT: Float + Send + Sync + Debug>(
     return Err(Error::LengthMismatch(r.len(), input.len()));
   }
 
+  let group_size = ctx.chunk_size(r.len()) as usize;
+  let groups = ctx.groups() as usize;
+
+  info!("group_size: {}, groups: {}", group_size, groups);
+
   if ctx.groups() < 2 {
     return ta_ts_rank(ctx, r, input, 0);
   }
-
-  let group_size = ctx.chunk_size(r.len()) as usize;
-  let groups = ctx.groups() as usize;
 
   if r.len() != group_size * groups {
     // ensure data is complete
@@ -142,9 +146,29 @@ pub fn ta_rank<NumT: Float + Send + Sync + Debug>(
     }
     rank_window.sort_by(|a, b| a.0.cmp(&b.0));
     let r = r.get();
-    rank_window.iter().enumerate().for_each(|(rank, (_v, i))| {
-      r[*i] = NumT::from(rank + 1).unwrap();
-    });
+
+    let mut prev_rank_value = rank_window[0].0.value;
+    let mut s = 0;
+    let total = NumT::from(rank_window.len()).unwrap();
+
+    // chunk by same value
+    for e in 0..rank_window.len() {
+      if prev_rank_value == rank_window[e].0.value {
+        continue;
+      }
+      let rank_avg = NumT::from(e + s + 1).unwrap() / NumT::from(2usize).unwrap();
+      for i in s..e {
+        r[rank_window[i].1] = rank_avg / total;
+      }
+      s = e;
+      prev_rank_value = rank_window[e].0.value;
+    }
+
+    // the last chunk
+    let rank_avg = NumT::from(rank_window.len() + s + 1).unwrap() / NumT::from(2usize).unwrap();
+    for i in s..rank_window.len() {
+      r[rank_window[i].1] = rank_avg / total;
+    }
   });
 
   Ok(())
@@ -196,6 +220,16 @@ mod tests {
   }
 
   #[test]
+  fn test_ta_rank_same_value() {
+    let input = vec![1.0, 2.0, 1.0];
+    let mut r = vec![0.0; input.len()];
+    let ctx = Context::new(0, 3, 0);
+
+    ta_rank(&ctx, &mut r, &input).unwrap();
+    assert_vec_eq_nan(&r, &vec![0.5, 1.0, 0.5]);
+  }
+
+  #[test]
   fn test_ta_rank_simple() {
     let input = vec![3.0, 1.0, 2.0, 4.0]; // groups=2, matrix [3,2; 1,4]
     let mut r = vec![0.0; input.len()];
@@ -204,7 +238,7 @@ mod tests {
     ta_rank(&ctx, &mut r, &input).unwrap();
     // j=0: values [3,2], sorted [2,3], ranks [2,1] at indices 0,2
     // j=1: values [1,4], sorted [1,4], ranks [1,2] at indices 1,3
-    assert_vec_eq_nan(&r, &vec![2.0, 1.0, 1.0, 2.0]);
+    assert_vec_eq_nan(&r, &vec![1.0, 0.5, 0.5, 1.0]);
   }
 
   #[test]
@@ -216,6 +250,16 @@ mod tests {
     ta_rank(&ctx, &mut r, &input).unwrap();
     // j=0: values [3,2,4], sorted [2,3,4], ranks [2,1,3] at 0,2,4
     // j=1: values [1,5,6], sorted [1,5,6], ranks [1,2,3] at 1,3,5
-    assert_vec_eq_nan(&r, &vec![2.0, 1.0, 1.0, 2.0, 3.0, 3.0]);
+    assert_vec_eq_nan(
+      &r,
+      &vec![
+        2.0 / 3.0,
+        1.0 / 3.0,
+        1.0 / 3.0,
+        2.0 / 3.0,
+        3.0 / 3.0,
+        3.0 / 3.0,
+      ],
+    );
   }
 }
