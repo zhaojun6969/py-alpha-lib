@@ -2,8 +2,7 @@ from .algo import *
 from .lang import *
 
 
-class Context:
-  def __init__(self, groups=1, start=0, flags=0):
-    self.groups = groups
-    self.start = start
-    self.flags = flags
+# skip nan values during computations
+FLAG_SKIP_NAN: int = 1
+# strictly cycle over the data
+FLAG_STRICTLY_CYCLE: int = 2

@@ -42,16 +42,17 @@ def download_data():
 
 def parse_args():
   parser = argparse.ArgumentParser()
-  parser.add_argument("no", nargs="*", type=int)
-  parser.add_argument("-s", "--start", type=int, required=False)
-  parser.add_argument("-e", "--end", type=int, required=False)
-  parser.add_argument("-v", "--verbose", action="store_true", required=False)
+  parser.add_argument("no", nargs="*", type=int, help="alpha numbers to run, e.g., 1 2 3")
+  parser.add_argument("-s", "--start", type=int, required=False, help="start alpha number")
+  parser.add_argument("-e", "--end", type=int, required=False, help="end alpha number")
+  parser.add_argument("-v", "--verbose", action="store_true", required=False, help="enable verbose logging")
   parser.add_argument(
-    "-d", "--data", type=str, required=False, default="dataPerformance.csv"
+    "-d", "--data", type=str, required=False, default="dataPerformance.csv",
+    help="data file path",
   )
-  parser.add_argument("-o", "--output", type=str, required=False)
-  parser.add_argument("--with-pd", action="store_true", default=False)
-  parser.add_argument("--with-al", action="store_true", default=False)
+  parser.add_argument("-o", "--output", type=str, required=False, help="save output to file")
+  parser.add_argument("--with-pd", action="store_true", default=False, help="run pandas implementation")
+  parser.add_argument("--with-al", action="store_true", default=False, help="run alpha-lib implementation")
   return parser.parse_args()
 
 

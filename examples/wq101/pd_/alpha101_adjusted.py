@@ -156,7 +156,7 @@ def rank(df):
   :param df: a pandas DataFrame.
   :return: a pandas DataFrame with rank along columns.
   """
-  return df.rank(axis=1, method="min", pct=True)
+  return df.rank(axis=1, method="average", pct=True)
   # return df.rank(pct=True)
 
 

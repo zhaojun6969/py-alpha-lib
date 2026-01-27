@@ -237,12 +237,13 @@ pub fn ema_impl<NumT: Float + Send + Sync>(
           *r = NumT::nan();
           continue;
         }
-        if ctx.is_strictly_cycle() && n < periods {
+        if ctx.is_strictly_cycle() && n < periods - 1 {
           *r = NumT::nan();
+          prev = *c;
         } else {
           *r = weight * *c + k * prev;
+          prev = *r;
         }
-        prev = *r;
       }
     });
   Ok(())
@@ -273,6 +274,22 @@ mod tests {
     assert_eq!(r[0], 1.0);
     assert_eq!(r[1], 1.5);
     assert_eq!(r[2], 2.25);
+  }
+
+  #[test]
+  fn test_ta_ema_strictly_cycle() {
+    let input = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+    let periods = 3;
+    let mut r = vec![0.0; input.len()];
+    let ctx = Context::new(0, 0, FLAG_STRICTLY_CYCLE);
+    let _ = ta_ema(&ctx, &mut r, &input, periods);
+    // EMA(3) -> alpha = 2/4 = 0.5.
+    // 0: NaN
+    // 1: NaN
+    // 2: 0.5*3 + 0.5*2 = 2.5
+    // 3: 0.5*4 + 0.5*2.5 = 3.25
+    // 4: 0.5*5 + 0.5*3.25 = 4.125
+    assert_vec_eq_nan(&r, &vec![f64::NAN, f64::NAN, 2.5, 3.25, 4.125]);
   }
 
   #[test]
