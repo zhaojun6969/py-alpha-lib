@@ -11,7 +11,7 @@ import argparse
 logger = logging.getLogger("alpha_backend")
 
 
-def setup_context(data_path: str) -> (ExecContext, int, int):
+def setup_context(data_path: str) -> tuple[ExecContext, int, int, int]:
   logger.info("Loading data")
   t1 = time.time()
   data = pd.read_csv(data_path)
@@ -50,7 +50,7 @@ def main(args):
     end = args.end or 102
     args.no = [i for i in filter(lambda x: x not in nofunc, range(start, end))]
 
-  results = [("data", load_time)]
+  results = [("data", load_time, 0)]
   for no in args.no:
     if no in nofunc:
       logger.info("unsupported alpha %d", no)

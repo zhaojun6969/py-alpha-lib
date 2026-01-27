@@ -31,7 +31,7 @@ def parse_args():
   return parser.parse_args()
 
 
-def setup_context(data_path: str) -> (Alphas, int):
+def setup_context(data_path: str) -> tuple[Alphas, int]:
   logger.info("Loading data")
   t1 = time.time()
   data = pd.read_csv(data_path)
@@ -55,7 +55,7 @@ def main(args):
     end = args.end or 102
     args.no = [i for i in filter(lambda x: x not in nofunc, range(start, end))]
 
-  results = [("data", load_time)]
+  results = [("data", load_time, 0)]
   for no in args.no:
     t1 = time.time()
     fn_name = f"alpha{no:03d}"
