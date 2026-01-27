@@ -1,3 +1,6 @@
+# Copyright 2026 MSD-RS Project LiJia
+# SPDX-License-Identifier: BSD-2-Clause
+
 # THIS FILE IS AUTO-GENERATED, DO NOT EDIT
 
 import numpy as np

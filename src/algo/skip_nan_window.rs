@@ -1,3 +1,6 @@
+// Copyright 2026 MSD-RS Project LiJia
+// SPDX-License-Identifier: BSD-2-Clause
+
 //! Skip nan window iterator, it keep the `window` size of no-nan values
 
 use num_traits::Float;

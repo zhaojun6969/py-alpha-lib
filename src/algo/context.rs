@@ -1,3 +1,6 @@
+// Copyright 2026 MSD-RS Project LiJia
+// SPDX-License-Identifier: BSD-2-Clause
+
 use std::fmt::Display;
 
 use pyo3::FromPyObject;

@@ -1,3 +1,6 @@
+# Copyright 2026 MSD-RS Project LiJia
+# SPDX-License-Identifier: BSD-2-Clause
+
 import numpy as np
 from . import _algo
 

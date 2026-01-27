@@ -1,3 +1,6 @@
+// Copyright 2026 MSD-RS Project LiJia
+// SPDX-License-Identifier: BSD-2-Clause
+
 use num_traits::Float;
 
 use super::{Context, Error, is_normal, skip_nan_window::SkipNanWindow};

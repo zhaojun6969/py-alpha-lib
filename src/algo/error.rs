@@ -1,3 +1,6 @@
+// Copyright 2026 MSD-RS Project LiJia
+// SPDX-License-Identifier: BSD-2-Clause
+
 use pyo3::{PyErr, exceptions::PyValueError};
 use thiserror::Error;
 
