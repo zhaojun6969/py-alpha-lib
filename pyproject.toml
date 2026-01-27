@@ -1,5 +1,5 @@
 [project]
-name = "alpha-lib"
+name = "py-alpha-lib"
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Rust",
@@ -12,6 +12,7 @@ readme = "README.md"
 description = "Alpha Library: A high-performance rolling window calculation library implemented in Rust with Python bindings. Used for financial data analysis and factor research."
 license = { file = "LICENSE" }
 authors = [{ name = "LiJia" }]
+
 
 [build-system]
 requires = ["maturin>=1.10,<2.0"]
