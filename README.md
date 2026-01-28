@@ -185,4 +185,4 @@ Toolchain requirements:
 
 ## Vibe Coding
 
-This project is co-created with `Gemini-3.0-Pro` , when you want add new algo, use skill [add_algo.md](.agenda/skills/add_algo.md) let AI to do correct code change for you.
+This project is co-created with `Gemini-3.0-Pro` , when you want add new algo, use skill [add_algo.md](.agent/skills/add_algo.md) let AI to do correct code change for you.
