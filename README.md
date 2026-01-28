@@ -172,3 +172,17 @@ The hardware/soft environment is:
 | #012 | 4              | 4                | 1                             | 0.7                            | -17.012321  | -17.012321    |
 | #013 | 446            | 9                | 49                            | 8                              | -0.58       | -0.58         |
 | #014 | 398            | 8                | 49                            | 18                             | 0.095449    | 0.095449      |
+
+# Development
+
+To contribute to the development of `alpha-lib`, you can clone the repository and set up a development environment.
+
+Toolchain requirements:
+
+- Rust (latest stable)
+- Python (3.11+)
+- [maturin](https://github.com/PyO3/maturin) (for building Python bindings)
+
+## Vibe Coding
+
+This project is co-created with `Gemini-3.0-Pro` , when you want add new algo, use skill [add_algo.md](.agenda/skills/add_algo.md) let AI to do correct code change for you.
