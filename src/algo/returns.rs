@@ -27,11 +27,17 @@ pub fn ta_fret<NumT: Float + Send + Sync>(
     return Err(Error::LengthMismatch(r.len(), open.len()));
   }
 
-  r.par_chunks_mut(ctx.chunk_size(r.len()))
-    .zip(open.par_chunks(ctx.chunk_size(open.len())))
-    .zip(high.par_chunks(ctx.chunk_size(high.len())))
-    .zip(low.par_chunks(ctx.chunk_size(low.len())))
-    .zip(close.par_chunks(ctx.chunk_size(close.len())))
+  let groups = ctx.groups();
+  let group_size = ctx.chunk_size(r.len());
+  if r.len() != group_size * groups {
+    return Err(Error::LengthMismatch(r.len(), group_size * groups));
+  }
+
+  r.par_chunks_mut(group_size)
+    .zip(open.par_chunks(group_size))
+    .zip(high.par_chunks(group_size))
+    .zip(low.par_chunks(group_size))
+    .zip(close.par_chunks(group_size))
     .for_each(|((((r, o), h), l), c)| {
       let start = ctx.start(r.len());
       r.fill(NumT::nan());
