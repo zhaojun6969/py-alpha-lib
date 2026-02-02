@@ -33,5 +33,6 @@ the `np.ndarray` is `ndarray` type in `numpy` package
 - STDDEV(input: np.ndarray[float], periods: int): Calculate Standard Deviation over a moving window
 - SUM(input: np.ndarray[float], periods: int): Calculate sum of values in preceding `periods` window  If periods is 0, it calculates the cumulative sum from the first valid value.
 - SUMBARS(input: np.ndarray[float], amount: float): Calculate number of periods (bars) backwards until the sum of values is greater than or equal to `amount`
+- SUMIF(input: np.ndarray[float], condition: np.ndarray[bool], periods: int): Calculate sum of values in preceding `periods` window where `condition` is true
 - TS_RANK(input: np.ndarray[float], periods: int): Calculate rank in a sliding window with size `periods`
 - VAR(input: np.ndarray[float], periods: int): Calculate Variance over a moving window  Variance = (SumSq - (Sum^2)/N) / (N - 1)
