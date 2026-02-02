@@ -336,6 +336,48 @@ def REF(
     _algo.ref(r, input, periods)
     return r
 
+def REGBETA(
+  y: np.ndarray | list[np.ndarray], x: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate Regression Coefficient (Beta) of Y on X over a moving window
+  
+  Beta = Cov(X, Y) / Var(X)
+  """
+  if isinstance(y, list) and isinstance(x, list):
+    r = [np.empty_like(x) for x in y]
+    y = [x.astype(float) for x in y]
+    x = [x.astype(float) for x in x]
+    _algo.regbeta(r, y, x, periods)
+    return r
+  else:
+    r = np.empty_like(y)
+    y = y.astype(float)
+    x = x.astype(float)
+    _algo.regbeta(r, y, x, periods)
+    return r
+
+def REGRESI(
+  y: np.ndarray | list[np.ndarray], x: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Calculate Regression Residual of Y on X over a moving window
+  
+  Returns the residual of the last point: epsilon = Y - (alpha + beta * X)
+  """
+  if isinstance(y, list) and isinstance(x, list):
+    r = [np.empty_like(x) for x in y]
+    y = [x.astype(float) for x in y]
+    x = [x.astype(float) for x in x]
+    _algo.regresi(r, y, x, periods)
+    return r
+  else:
+    r = np.empty_like(y)
+    y = y.astype(float)
+    x = x.astype(float)
+    _algo.regresi(r, y, x, periods)
+    return r
+
 def RLONGCROSS(
   a: np.ndarray | list[np.ndarray], b: np.ndarray | list[np.ndarray], n: int
 ) -> np.ndarray | list[np.ndarray]:

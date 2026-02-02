@@ -170,10 +170,7 @@ def to_python(
   if not code.strip():
     return ""
 
-  try:
-    tree = parser.parse(code)
-  except Exception as e:
-    raise ValueError(f"Failed to parse code: {code}") from e
+  tree = parser.parse(code)
 
   transformer = AlphaTransformer(name_convertor=name_convertor)
   converted_expr = transformer.transform(tree)

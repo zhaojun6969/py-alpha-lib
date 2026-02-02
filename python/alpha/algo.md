@@ -21,6 +21,8 @@ the `np.ndarray` is `ndarray` type in `numpy` package
 - RANK(input: np.ndarray[float]): Calculate rank percentage cross group dimension, the ctx.groups() is the number of groups Same value are averaged
 - RCROSS(a: np.ndarray[float], b: np.ndarray[float]): For 2 arrays A and B, return true if A[i-1] > B[i-1] and A[i] <= B[i] alias: death_cross, cross_le
 - REF(input: np.ndarray[float], periods: int): Right shift input array by `periods`, r[i] = input[i - periods]
+- REGBETA(y: np.ndarray[float], x: np.ndarray[float], periods: int): Calculate Regression Coefficient (Beta) of Y on X over a moving window  Beta = Cov(X, Y) / Var(X)
+- REGRESI(y: np.ndarray[float], x: np.ndarray[float], periods: int): Calculate Regression Residual of Y on X over a moving window  Returns the residual of the last point: epsilon = Y - (alpha + beta * X)
 - RLONGCROSS(a: np.ndarray[float], b: np.ndarray[float], n: int): For 2 arrays A and B, return true if previous N periods A > B, Current A <= B
 - SMA(input: np.ndarray[float], n: int, m: int): Exponential Moving Average (variant of well-known EMA) weight = m / n
 - STDDEV(input: np.ndarray[float], periods: int): Calculate Standard Deviation over a moving window

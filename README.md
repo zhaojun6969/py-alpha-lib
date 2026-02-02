@@ -23,6 +23,8 @@ For financial data analysis, there are many algorithms required a rolling window
 | RANK       | rank by group dim                                            |                                                                         |
 | RCROSS     | RCROSE(A, B): Previous A > B, Current A <= B                 |                                                                         |
 | REF        | Reference to value N periods ago                             | https://www.amibroker.com/guide/afl/ref.html                            |
+| REGBETA    | REGRESI(A, B): Previous A > B, Current A <= B                |                                                                         |
+| REGRESI    | REGRESI(A, B): Previous A > B, Current A <= B                |                                                                         |
 | RLONGCROSS | RLONGCROSS(A,B,N): Previous N A > B, Current A <= B          |                                                                         |
 | SMA        | Exponential Moving Average (weight = m / n)                  | https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average |
 | SUM        | Sum of value N periods ago                                   | https://www.amibroker.com/guide/afl/sum.html                            |
