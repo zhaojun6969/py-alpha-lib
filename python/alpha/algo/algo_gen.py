@@ -586,6 +586,23 @@ def SUMIF(
     _algo.sumif(r, input, condition, periods)
     return r
 
+def TS_CORRELATION(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Time Series Correlation
+  
+  Calculates the correlation coefficient between the input series and the time index.
+  """
+  if isinstance(input, list):
+    r = [np.empty_like(x) for x in input]
+    _algo.ts_correlation(r, input, periods)
+    return r
+  else:
+    r = np.empty_like(input)
+    _algo.ts_correlation(r, input, periods)
+    return r
+
 def TS_RANK(
   input: np.ndarray | list[np.ndarray], periods: int
 ) -> np.ndarray | list[np.ndarray]:

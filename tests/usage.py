@@ -97,3 +97,10 @@ print("NEUTRALIZE:", result_neutralize)
 df = df.assign(neutralize=result_neutralize)
 print(df.pivot_table(index="time", columns="stock", values="neutralize"))
 
+# Calculate Time Series Correlation
+al.set_ctx(flags=0, groups=1)
+data_corr = np.array([1, 2, 3, 4, 5, 5, 4, 3, 2, 1], dtype=np.float64)
+# First 5: Correlation should be 1.0 (perfectly increasing)
+# Next part: decreasing.
+result_corr = al.TS_CORRELATION(data_corr, 5)
+print("TS_CORRELATION(5):", result_corr)
