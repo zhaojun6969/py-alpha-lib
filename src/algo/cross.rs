@@ -19,7 +19,6 @@ pub fn ta_cross<NumT: Float + Send + Sync>(
     return Err(Error::LengthMismatch(r.len(), a.len()));
   }
 
-
   r.par_chunks_mut(ctx.chunk_size(r.len()))
     .zip(a.par_chunks(ctx.chunk_size(a.len())))
     .zip(b.par_chunks(ctx.chunk_size(b.len())))
@@ -92,7 +91,6 @@ pub fn ta_rcross<NumT: Float + Send + Sync>(
     return Err(Error::LengthMismatch(r.len(), a.len()));
   }
 
-
   r.par_chunks_mut(ctx.chunk_size(r.len()))
     .zip(a.par_chunks(ctx.chunk_size(a.len())))
     .zip(b.par_chunks(ctx.chunk_size(b.len())))
@@ -155,7 +153,6 @@ pub fn ta_longcross<NumT: Float + Send + Sync>(
   if r.len() != a.len() || r.len() != b.len() {
     return Err(Error::LengthMismatch(r.len(), a.len()));
   }
-
 
   r.par_chunks_mut(ctx.chunk_size(r.len()))
     .zip(a.par_chunks(ctx.chunk_size(a.len())))
@@ -269,7 +266,6 @@ pub fn ta_rlongcross<NumT: Float + Send + Sync>(
   if r.len() != a.len() || r.len() != b.len() {
     return Err(Error::LengthMismatch(r.len(), a.len()));
   }
-
 
   r.par_chunks_mut(ctx.chunk_size(r.len()))
     .zip(a.par_chunks(ctx.chunk_size(a.len())))
@@ -416,5 +412,28 @@ mod tests {
     // 3: 6>=5. cnt=3 >= 2. -> T. cnt=0.
 
     assert_vec_eq_bool(&r, &vec![false, false, false, true]);
+  }
+
+  #[test]
+  fn test_longcross_end_boundary() {
+    let a = vec![1.0, 2.0, 3.0, 6.0, 7.0, 1.0, 2.0, 3.0, 6.0, 7.0];
+    let b = vec![5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0];
+
+    let mut r = vec![false; 10];
+    let mut ctx = Context::new(0, 2, 0);
+    for i in 4..=5 {
+      ctx._end = i;
+      ta_longcross(&ctx, &mut r, &a, &b, 2).unwrap();
+      // 0: cnt=1
+      // 1: cnt=2
+      // 2: 3<5. cnt=3 >= 2. -> T. cnt=0.
+
+      assert_vec_eq_bool(
+        &r,
+        &vec![
+          false, false, false, true, false, false, false, false, true, false,
+        ],
+      );
+    }
   }
 }

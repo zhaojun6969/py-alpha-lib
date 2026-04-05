@@ -1,5 +1,14 @@
 # ChangeLog
 
+## [0.2.1] - 2026-04-06
+
+### Fix
+
+- Fixed an internal logic bug in `Context::end` where `_end == 0` incorrectly returned `0` instead of yielding the expected `total` array dimension.
+- Changed Context data truncation (`end` limit) to execute within the closure of each parallel grouped chunk (via `ctx.end()`) rather than globally shrinking arrays ahead of time (`align_end()`). This prevents group size corruption and misaligned cross-sectional indexing when `groups > 1`.
+- Bound internal algorithm iterations and `SkipNanWindow` initializations dynamically to the `end` limit on a per-chunk basis while preserving absolute `start` index zero-alignments.
+- Deprecated and removed legacy `align_end` and `align_end_mut` functions entirely to enforce correct boundary lifecycle patterns across algorithms.
+
 
 ## [0.2.0] - 2026-02-26
 
