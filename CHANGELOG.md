@@ -1,5 +1,16 @@
 # ChangeLog
 
+
+## [0.2.4] - 2026-04-27
+
+### Added
+
+- ALPHA: calculate alpha for a strategy
+- BETA: calculate beta for a strategy
+- SHARPE: calculate sharpe ratio for a strategy
+- MAX_DRAWDOWN: calculate max drawdown of a series
+
+
 ## [0.2.3] - 2026-04-13
 
 ### Added

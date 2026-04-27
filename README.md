@@ -157,9 +157,11 @@ Naming Rules:
 
 | Name | Description |
 |---|---|
+| ALPHA | Rolling Jensen's Alpha of asset returns against benchmark returns. |
 | BACKFILL | Forward-fill NaN values with the last valid observation |
 | BARSLAST | Calculate number of bars since last condition true |
 | BARSSINCE | Calculate number of bars since first condition true |
+| BETA | Rolling Beta coefficient of asset returns against benchmark returns. |
 | BINS | Discretize the input into n bins, the ctx.groups() is the number of groups |
 | CC_RANK | Calculate rank percentage cross group dimension, the ctx.groups() is the number of groups Same value are averaged |
 | CC_ZSCORE | Calculate cross-sectional Z-Score across groups at each time step |
@@ -184,6 +186,7 @@ Naming Rules:
 | LONGCROSS | For 2 arrays A and B, return true if previous N periods A < B, Current A >= B |
 | LWMA | Linear Weighted Moving Average |
 | MA | Simple Moving Average, also known as arithmetic moving average |
+| MAX_DRAWDOWN | Rolling Maximum Drawdown. |
 | MIN_MAX_DIFF | Calculate rolling min-max difference (range) over a moving window |
 | MOMENT | Calculate rolling k-th central moment over a moving window |
 | NEUTRALIZE | Neutralize the effect of a categorical variable on a numeric variable |
@@ -197,6 +200,7 @@ Naming Rules:
 | RLONGCROSS | For 2 arrays A and B, return true if previous N periods A > B, Current A <= B |
 | SCAN_ADD | Conditional cumulative add: r[t] = r[t-1] + (cond[t] ? input[t] : 0) |
 | SCAN_MUL | Conditional cumulative multiply: r[t] = r[t-1] * (cond[t] ? input[t] : 1) |
+| SHARPE | Rolling Sharpe Ratio of returns. |
 | SKEWNESS | Calculate rolling sample Skewness over a moving window |
 | SLOPE | Linear Regression Slope |
 | SMA | Exponential Moving Average (variant of well-known EMA) weight = m / n |
