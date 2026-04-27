@@ -18,6 +18,30 @@ def _to_bool(a):
     return a
   return a.astype(bool)
 
+def ALPHA(
+  input: np.ndarray | list[np.ndarray], benchmark: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Rolling Jensen's Alpha of asset returns against benchmark returns.
+  
+  Alpha = mean(input) - Beta * mean(benchmark)
+  Measures excess return of an asset relative to its expected return given beta.
+  
+  Ref: https://en.wikipedia.org/wiki/Jensen%27s_alpha
+  """
+  if isinstance(input, list) and isinstance(benchmark, list):
+    input = [_to_f64(x) for x in input]
+    benchmark = [_to_f64(x) for x in benchmark]
+    r = [np.empty_like(x) for x in input]
+    _algo.alpha(r, input, benchmark, periods)
+    return r
+  else:
+    input = _to_f64(input)
+    benchmark = _to_f64(benchmark)
+    r = np.empty_like(input)
+    _algo.alpha(r, input, benchmark, periods)
+    return r
+
 def BACKFILL(
   input: np.ndarray | list[np.ndarray]
 ) -> np.ndarray | list[np.ndarray]:
@@ -74,6 +98,30 @@ def BARSSINCE(
     r = np.empty_like(input, dtype=float)
     input = input.astype(bool)
     _algo.barssince(r, input)
+    return r
+
+def BETA(
+  input: np.ndarray | list[np.ndarray], benchmark: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Rolling Beta coefficient of asset returns against benchmark returns.
+  
+  Beta = Covariance(input, benchmark) / Variance(benchmark)
+  Measures systematic risk of an asset relative to the market.
+  
+  Ref: https://en.wikipedia.org/wiki/Beta_(finance)
+  """
+  if isinstance(input, list) and isinstance(benchmark, list):
+    input = [_to_f64(x) for x in input]
+    benchmark = [_to_f64(x) for x in benchmark]
+    r = [np.empty_like(x) for x in input]
+    _algo.beta(r, input, benchmark, periods)
+    return r
+  else:
+    input = _to_f64(input)
+    benchmark = _to_f64(benchmark)
+    r = np.empty_like(input)
+    _algo.beta(r, input, benchmark, periods)
     return r
 
 def BINS(
@@ -542,6 +590,29 @@ def MA(
     _algo.ma(r, input, periods)
     return r
 
+def MAX_DRAWDOWN(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Rolling Maximum Drawdown.
+  
+  MaxDrawdown = minimum peak-to-trough decline within the rolling window.
+  Result is expressed as a negative return (e.g. -0.2 means 20% drawdown from peak).
+  Input should be a price or equity curve series.
+  
+  Ref: https://en.wikipedia.org/wiki/Drawdown_(economics)
+  """
+  if isinstance(input, list):
+    input = [_to_f64(x) for x in input]
+    r = [np.empty_like(x) for x in input]
+    _algo.max_drawdown(r, input, periods)
+    return r
+  else:
+    input = _to_f64(input)
+    r = np.empty_like(input)
+    _algo.max_drawdown(r, input, periods)
+    return r
+
 def MIN_MAX_DIFF(
   input: np.ndarray | list[np.ndarray], periods: int
 ) -> np.ndarray | list[np.ndarray]:
@@ -809,6 +880,28 @@ def SCAN_MUL(
     condition = _to_bool(condition)
     r = np.empty_like(input)
     _algo.scan_mul(r, input, condition)
+    return r
+
+def SHARPE(
+  input: np.ndarray | list[np.ndarray], periods: int
+) -> np.ndarray | list[np.ndarray]:
+  """
+  Rolling Sharpe Ratio of returns.
+  
+  Sharpe = mean(returns) / stddev(returns)
+  Measures risk-adjusted return over a rolling window.
+  
+  Ref: https://en.wikipedia.org/wiki/Sharpe_ratio
+  """
+  if isinstance(input, list):
+    input = [_to_f64(x) for x in input]
+    r = [np.empty_like(x) for x in input]
+    _algo.sharpe(r, input, periods)
+    return r
+  else:
+    input = _to_f64(input)
+    r = np.empty_like(input)
+    _algo.sharpe(r, input, periods)
     return r
 
 def SKEWNESS(

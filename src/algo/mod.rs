@@ -1,9 +1,12 @@
 // Copyright 2026 MSD-RS Project LiJia
 // SPDX-License-Identifier: BSD-2-Clause
 
+mod alpha;
 mod backfill;
+mod beta;
 mod context;
 mod cross;
+mod drawdown;
 mod ema;
 mod entropy;
 mod error;
@@ -18,6 +21,7 @@ mod rank;
 mod returns;
 mod scan;
 mod series;
+mod sharpe;
 mod skip_nan_window;
 mod slope;
 mod stats;
@@ -25,9 +29,12 @@ mod stddev;
 mod sum;
 mod zscore;
 
+pub use alpha::*;
 pub use backfill::*;
+pub use beta::*;
 pub use context::Context;
 pub use cross::*;
+pub use drawdown::*;
 pub use ema::*;
 pub use entropy::*;
 pub use error::Error;
@@ -42,6 +49,7 @@ pub use rank::*;
 pub use returns::*;
 pub use scan::*;
 pub use series::*;
+pub use sharpe::*;
 pub use slope::*;
 pub use stats::*;
 pub use stddev::*;

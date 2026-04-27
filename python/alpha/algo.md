@@ -2,9 +2,11 @@ List of available functions with python type hints:
 
 the `np.ndarray` is `ndarray` type in `numpy` package
 
+- ALPHA(input: np.ndarray[float], benchmark: np.ndarray[float], periods: int): Rolling Jensen's Alpha of asset returns against benchmark returns.  Alpha = mean(input) - Beta * mean(benchmark) Measures excess return of an asset relative to its expected return given beta.
 - BACKFILL(input: np.ndarray[float]): Forward-fill NaN values with the last valid observation  Iterates forward through each group; if x[i] is NaN, copies the last valid value. Leading NaNs (before any valid value) remain NaN.
 - BARSLAST(input: np.ndarray[bool]): Calculate number of bars since last condition true
 - BARSSINCE(input: np.ndarray[bool]): Calculate number of bars since first condition true
+- BETA(input: np.ndarray[float], benchmark: np.ndarray[float], periods: int): Rolling Beta coefficient of asset returns against benchmark returns.  Beta = Covariance(input, benchmark) / Variance(benchmark) Measures systematic risk of an asset relative to the market.
 - BINS(input: np.ndarray[float], bins: int): Discretize the input into n bins, the ctx.groups() is the number of groups  Bins are 0-based index. Same value are assigned to the same bin.
 - CC_RANK(input: np.ndarray[float]): Calculate rank percentage cross group dimension, the ctx.groups() is the number of groups Same value are averaged
 - CC_ZSCORE(input: np.ndarray[float]): Calculate cross-sectional Z-Score across groups at each time step  Z-Score = (x - mean) / stddev, computed across all groups for each time position. NaN values are excluded from mean/stddev computation. NaN input produces NaN output.
@@ -29,6 +31,7 @@ the `np.ndarray` is `ndarray` type in `numpy` package
 - LONGCROSS(a: np.ndarray[float], b: np.ndarray[float], n: int): For 2 arrays A and B, return true if previous N periods A < B, Current A >= B
 - LWMA(input: np.ndarray[float], periods: int): Linear Weighted Moving Average  LWMA = SUM(Price * Weight) / SUM(Weight)
 - MA(input: np.ndarray[float], periods: int): Simple Moving Average, also known as arithmetic moving average
+- MAX_DRAWDOWN(input: np.ndarray[float], periods: int): Rolling Maximum Drawdown.  MaxDrawdown = minimum peak-to-trough decline within the rolling window. Result is expressed as a negative return (e.g. -0.2 means 20% drawdown from peak). Input should be a price or equity curve series.
 - MIN_MAX_DIFF(input: np.ndarray[float], periods: int): Calculate rolling min-max difference (range) over a moving window  TS_MIN_MAX_DIFF = TS_MAX(x, d) - TS_MIN(x, d) Single-pass using two monotonic deques for efficiency.
 - MOMENT(input: np.ndarray[float], periods: int, k: int): Calculate rolling k-th central moment over a moving window  MOMENT(x, d, k) = mean((x - mean)^k) over window of d periods. This is the raw (non-adjusted) sample moment. k=2 gives variance (population), k=3 gives raw third moment, etc.
 - NEUTRALIZE(category: np.ndarray[float], input: np.ndarray[float]): Neutralize the effect of a categorical variable on a numeric variable
@@ -42,6 +45,7 @@ the `np.ndarray` is `ndarray` type in `numpy` package
 - RLONGCROSS(a: np.ndarray[float], b: np.ndarray[float], n: int): For 2 arrays A and B, return true if previous N periods A > B, Current A <= B
 - SCAN_ADD(input: np.ndarray[float], condition: np.ndarray[bool]): Conditional cumulative add: r[t] = r[t-1] + (cond[t] ? input[t] : 0)  Used for SELF-referencing alpha expressions with additive accumulation. Serial within each stock, parallel across stocks via rayon.
 - SCAN_MUL(input: np.ndarray[float], condition: np.ndarray[bool]): Conditional cumulative multiply: r[t] = r[t-1] * (cond[t] ? input[t] : 1)  Used for SELF-referencing alpha expressions like GTJA #143. Serial within each stock, parallel across stocks via rayon.
+- SHARPE(input: np.ndarray[float], periods: int): Rolling Sharpe Ratio of returns.  Sharpe = mean(returns) / stddev(returns) Measures risk-adjusted return over a rolling window.
 - SKEWNESS(input: np.ndarray[float], periods: int): Calculate rolling sample Skewness over a moving window  Uses adjusted Fisher-Pearson formula (matches pandas): skew = n / ((n-1)(n-2)) * sum(((x-mean)/std)^3) Requires at least 3 valid values.
 - SLOPE(input: np.ndarray[float], periods: int): Linear Regression Slope  Calculates the slope of the linear regression line for a moving window.
 - SMA(input: np.ndarray[float], n: int, m: int): Exponential Moving Average (variant of well-known EMA) weight = m / n

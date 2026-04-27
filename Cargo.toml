@@ -8,6 +8,7 @@ authors = ["ElseJJ"]
 [lib]
 name = "alpha"
 crate-type = ["cdylib", "rlib"]
+doctest = false
 
 [dependencies]
 pyo3 = { version = "0.28", features = ["abi3"] }
